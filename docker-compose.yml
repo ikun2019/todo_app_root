@@ -1,6 +1,7 @@
 version: '3'
 services:
   front:
+    container_name: front
     build:
       context: ./client
       dockerfile: Dockerfile
@@ -8,9 +9,17 @@ services:
       - ${FRONT_PORT}:3000
     volumes:
       - ./client:/app
+    environment:
+      API_PORT: ${API_PORT}
+    env_file:
+      - .env
     depends_on:
       - api
+    networks:
+      - app-network
+
   api:
+    container_name: api
     build:
       context: ./api
       dockerfile: Dockerfile
@@ -29,7 +38,11 @@ services:
       - .env
     depends_on:
       - database
+    networks:
+      - app-network
+
   database:
+    container_name: mysql
     image: mysql:5.7
     platform: linux/amd64
     ports:
@@ -41,3 +54,13 @@ services:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    # Dockerコンテナ間の通信を可能にするネットワーク
+    driver: bridge
+    # 名前をtodo_app_app-networkにさせないようにする設定
+    external:
+      name: app-network
